@@ -1,0 +1,48 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+
+void countWords(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (!file) { printf("Error: Could not open file.\n"); exit(1); }
+    int words = 0; char ch;
+    while ((ch = fgetc(file)) != EOF) if (ch == ' ' || ch == '\n') words++;
+    fclose(file);
+    printf("Word Count: %d\n", words);
+}
+
+void countLines(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (!file) { printf("Error: Could not open file.\n"); exit(1); }
+    int lines = 0; char ch;
+    while ((ch = fgetc(file)) != EOF) if (ch == '\n') lines++;
+    fclose(file);
+    printf("Line Count: %d\n", lines);
+}
+
+void countCharacters(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (!file) { printf("Error: Could not open file.\n"); exit(1); }
+    int characters = 0;
+    while (fgetc(file) != EOF) characters++;
+    fclose(file);
+    printf("Character Count: %d\n", characters);
+}
+
+int main() {
+    char filename[] = "input.txt";
+    pid_t pid1 = fork();
+    if (pid1 == 0) { countWords(filename); exit(0); }
+    else {
+        pid_t pid2 = fork();
+        if (pid2 == 0) { countLines(filename); exit(0); }
+        else {
+            pid_t pid3 = fork();
+            if (pid3 == 0) { countCharacters(filename); exit(0); }
+            else { wait(NULL); wait(NULL); wait(NULL); }
+        }
+    }
+    return 0;
+}
