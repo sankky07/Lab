@@ -1,0 +1,55 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <ctype.h>
+#include <sys/wait.h>
+
+void convertToUppercase(const char *filename) {
+    FILE *file = fopen(filename, "r+");
+    if (file == NULL) {
+        perror("Error opening file");
+        exit(1);
+    }
+    fseek(file, 0, SEEK_SET);
+    char ch;
+    while ((ch = fgetc(file)) != EOF) {
+        fseek(file, -1, SEEK_CUR);
+        fputc(toupper(ch), file);
+        fseek(file, 0, SEEK_CUR);
+    }
+    fclose(file);
+}
+
+void displayFileContent(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        perror("Error opening file");
+        exit(1);
+    }
+    printf("File content:\n");
+    char ch;
+    while ((ch = fgetc(file)) != EOF) {
+        putchar(ch);
+    }
+    printf("\n");
+    fclose(file);
+}
+
+int main() {
+    char filename[] = "textfile.txt";
+    pid_t pid1 = fork();
+    if (pid1 == 0) {
+        convertToUppercase(filename);
+        exit(0);
+    }
+    wait(NULL);
+    pid_t pid2 = fork();
+    if (pid2 == 0) {
+        displayFileContent(filename);
+        exit(0);
+    }
+    wait(NULL);
+    printf("Operations completed successfully.\n");
+    return 0;
+}
