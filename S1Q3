@@ -1,0 +1,46 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <semaphore.h>
+#include <sys/wait.h>
+#include <string.h>
+
+void print_PID() {
+    int PID = getpid();
+    char str[100];
+    sprintf(str, "My process id is: %d\n", PID);
+
+    for (int i = 0; i < strlen(str); i++) {
+        fprintf(stderr, "%c", str[i]);
+        sleep(1);
+    }
+}
+
+int main() {
+    sem_t *sem = sem_open("/my_semaphore", O_CREAT, 0644, 1);
+    if (sem == SEM_FAILED) {
+        perror("sem_open failed");
+        exit(1);
+    }
+
+    pid_t pids[3];
+    for (int i = 0; i < 3; i++) {
+        pids[i] = fork();
+        if (pids[i] == 0) {
+            sem_wait(sem);
+            print_PID();
+            sem_post(sem);
+            exit(0);
+        }
+    }
+
+    for (int i = 0; i < 3; i++) {
+        wait(NULL);
+    }
+
+    sem_close(sem);
+    sem_unlink("/my_semaphore");
+
+    return 0;
+}
